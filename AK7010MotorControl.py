@@ -7,7 +7,7 @@ import can
 import numpy as np
 
 # somewhat arbitrarily set for now - the timing seems good anything higher leads to breaks between speed
-CMD_DELTA_TIME = .75
+CMD_DELTA_TIME = .25
 BRAKE_CUR = 5
 
 
@@ -59,14 +59,13 @@ class Motor():
         "speed_pos": 6,
     }
 
-    def __init__(self, channel: str, id: int, listener_func: Callable[[...], None] = blank_func) -> None:
-        self.channel = channel
+    def __init__(self, id: int, bus: can.ThreadSafeBus, listener_func: Callable[[...], None] = blank_func) -> None:
         self.id = id
         self.listener = MotorListener(listener_func)
         self.thread = None
         self.cur_speed = 0
 
-        self.bus = can.interface.Bus(interface='socketcan', channel=channel, bitrate=1000000)
+        self.bus = bus
         can.Notifier(self.bus, [self.listener])
 
         self.last_update = time.time()
@@ -81,7 +80,7 @@ class Motor():
 
                 # TODO: consider that:
                 # we might not need break at all, it more prevents movement than just slowing down the rotor
-                self._send_brake(BRAKE_CUR)
+                # self._send_brake(BRAKE_CUR)
 
             return func(self, *args, **kwargs)
 
@@ -93,7 +92,7 @@ class Motor():
     @clear_motor
     def stop(self) -> None:
         self._send_command(self.id, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0XFD])
-        self.bus.shutdown()
+        # self.bus.shutdown()
 
     @staticmethod
     def _put_data_in_array(data: int, num_bytes: int) -> List[int]:
@@ -101,7 +100,7 @@ class Motor():
 
     def _send_speed(self, speed: int) -> None:
         speed *= 21 * 10
-        data = self._put_data_in_array(speed, 4)
+        data = self._put_data_in_array(1000, 4)
         self._send_command(self.MOTOR_MODES["speed"] << 8 | self.id, data)
 
     @clear_motor
@@ -117,9 +116,9 @@ class Motor():
         speed //= 10
         acc //= 10
 
-        pos_data = self.put_data_in_array(pos, 4)
-        speed_data = self.put_data_in_array(speed, 2)
-        acc_data = self.put_data_in_array(acc, 2)
+        pos_data = self._put_data_in_array(pos, 4)
+        speed_data = self._put_data_in_array(speed, 2)
+        acc_data = self._put_data_in_array(acc, 2)
 
         self._send_command(self.MOTOR_MODES["speed_pos"] << 8 | self.id, pos_data + speed_data + acc_data)
 
@@ -130,20 +129,22 @@ class Motor():
 
     def _send_command(self, id: int, data: List[int]) -> None:
         # ensure we aren't overloading CAN line
-        now = time.time()
-        if self.last_update + CMD_DELTA_TIME > now:
-            time.sleep(self.last_update + CMD_DELTA_TIME - now)
-        self.last_update = now
+        # now = time.time()
+        # if self.last_update + CMD_DELTA_TIME > now:
+        #     time.sleep(self.last_update + CMD_DELTA_TIME - now)
+        # self.last_update = now
 
         msg = can.Message(
             arbitration_id=id,
             data = data,
             is_extended_id=True
         )
+        print(msg)
         self.bus.send(msg)
 
     def set_speed(self, speed: int):
         self.cur_speed = speed
+        # self._send_speed(self.cur_speed)
         if not self.thread or self.thread.is_stopped():
             self.thread = SpeedThread(target=self._maintain_speed)
             self.thread.start()
@@ -153,4 +154,4 @@ class Motor():
             self._send_speed(self.cur_speed)
             time.sleep(CMD_DELTA_TIME)
 
-        self.send_brake(BRAKE_CUR)
+        # self._send_brake(BRAKE_CUR)
