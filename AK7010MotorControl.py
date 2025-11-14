@@ -61,12 +61,12 @@ class Motor():
 
     def __init__(self, id: int, bus: can.ThreadSafeBus, listener_func: Callable[[...], None] = blank_func) -> None:
         self.id = id
-        self.listener = MotorListener(listener_func)
+        # self.listener = MotorListener(listener_func)
         self.thread = None
         self.cur_speed = 0
 
         self.bus = bus
-        can.Notifier(self.bus, [self.listener])
+        # can.Notifier(self.bus, [self.listener])
 
         self.last_update = time.time()
 

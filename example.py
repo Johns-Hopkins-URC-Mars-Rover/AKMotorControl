@@ -8,9 +8,9 @@ def printout(**kwargs):
         print(f"{key}: {value}")
 
 print("starting bus")
-bus = can.interface.Bus(interface="socketcan", channel="can0", bitrate=1000000)
+bus = can.ThreadSafeBus(interface="socketcan", channel="can0", bitrate=1000000)
 
-motors = [6]
+motors = [3, 5]
 print("starting motors")
 motor_obj = [Motor(i, bus, printout) for i in motors]
 
