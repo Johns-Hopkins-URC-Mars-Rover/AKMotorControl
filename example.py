@@ -27,7 +27,7 @@ time.sleep(2)
 
 print("stopping motors")
 for i in motor_obj:
-    i.stop()
+    i.shutdown()
 
 bus.shutdown()
 

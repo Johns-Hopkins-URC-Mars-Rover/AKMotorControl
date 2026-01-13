@@ -90,9 +90,13 @@ class Motor():
         self._send_command(self.id, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0XFC])
 
     @clear_motor
-    def stop(self) -> None:
+    def shutdown(self) -> None:
         self._send_command(self.id, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0XFD])
         # self.bus.shutdown()
+
+    @clear_motor
+    def stop(self):
+        pass
 
     @staticmethod
     def _put_data_in_array(data: int, num_bytes: int) -> List[int]:
@@ -154,4 +158,4 @@ class Motor():
             self._send_speed(self.cur_speed)
             time.sleep(CMD_DELTA_TIME)
 
-        # self._send_brake(BRAKE_CUR)
+        self._send_brake(BRAKE_CUR)
