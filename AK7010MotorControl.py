@@ -104,7 +104,7 @@ class Motor():
 
     def _send_speed(self, speed: int) -> None:
         speed *= 21 * 10
-        data = self._put_data_in_array(1000, 4)
+        data = self._put_data_in_array(speed, 4)
         self._send_command(self.MOTOR_MODES["speed"] << 8 | self.id, data)
 
     @clear_motor
