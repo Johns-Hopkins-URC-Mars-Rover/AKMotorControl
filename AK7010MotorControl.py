@@ -6,6 +6,9 @@ import threading
 import can
 import numpy as np
 
+import moteus_pi3hat
+import threadsafe_pi3hat_can as pi3hat_can
+
 # somewhat arbitrarily set for now - the timing seems good anything higher leads to breaks between speed
 CMD_DELTA_TIME = .25
 BRAKE_CUR = 5
@@ -59,13 +62,16 @@ class Motor():
         "speed_pos": 6,
     }
 
-    def __init__(self, id: int, bus: can.ThreadSafeBus, listener_func: Callable[[...], None] = blank_func) -> None:
+    def __init__(self, id: int, bus_id: int, transport: moteus_pi3hat.Pi3HatRouter, listener_func: Callable[[...], None] = blank_func) -> None:
         self.id = id
         # self.listener = MotorListener(listener_func)
         self.thread = None
         self.cur_speed = 0
 
-        self.bus = bus
+        self.bus = bus_id
+        self.can_bus = pi3hat_can.ThreadSafePi3hatCan(69, bus_id, transport)
+
+
         # can.Notifier(self.bus, [self.listener])
 
         self.last_update = time.time()
@@ -80,7 +86,7 @@ class Motor():
 
                 # TODO: consider that:
                 # we might not need break at all, it more prevents movement than just slowing down the rotor
-                # self._send_brake(BRAKE_CUR)
+                self._send_brake(BRAKE_CUR)
 
             return func(self, *args, **kwargs)
 
@@ -138,14 +144,19 @@ class Motor():
         #     time.sleep(self.last_update + CMD_DELTA_TIME - now)
         # self.last_update = now
 
-        msg = can.Message(
-            arbitration_id=id,
-            data = data,
-            is_extended_id=True
-        )
-        print(msg)
-        self.bus.send(msg)
+        # msg = can.Message(
+        #     arbitration_id=id,
+        #     data = data,
+        #     is_extended_id=True
+        # )
+        # print(msg)
+        # self.bus.send(msg)
 
+        print(id)
+
+        self.can_bus.send_msg(id, data)
+
+        # do something with results maybe
     def set_speed(self, speed: int):
         self.cur_speed = speed
         # self._send_speed(self.cur_speed)
