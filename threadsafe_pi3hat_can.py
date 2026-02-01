@@ -8,7 +8,6 @@ import moteus
 class ThreadSafePi3hatCan:
     def __init__(self, this_id: int, bus_id: int, transport: moteus_pi3hat.Pi3HatRouter):
         self.transport = transport
-        self.controller = moteus.Controller(id=this_id, transport=transport)
         self.bus = bus_id
         self.lock = threading.Lock()
 
@@ -22,7 +21,7 @@ class ThreadSafePi3hatCan:
 
         self.lock.acquire()
 
-        results = asyncio.run(self.transport.cycle([msg, self.controller.make_query()]))
+        results = asyncio.run(self.transport.cycle([msg, ]))
 
         self.lock.release()
 

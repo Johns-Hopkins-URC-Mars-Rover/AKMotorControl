@@ -13,10 +13,11 @@ print("starting bus")
 # bus = can.ThreadSafeBus(interface="socketcan", channel="can0", bitrate=1000000)
 default_can_config = moteus_pi3hat.CanConfiguration()
 default_can_config.fdcan_frame = False
+default_can_config.slow_bitrate = default_can_config.fast_bitrate = 1000000
 can_config = {i: default_can_config for i in range(1, 6)}
-# can_config = {
-#     2: default_can_config
-# }
+can_config = {
+    2: default_can_config
+}
 print(can_config)
 
 transport = moteus_pi3hat.Pi3HatRouter(can=can_config)
